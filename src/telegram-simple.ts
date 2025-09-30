@@ -137,14 +137,16 @@ async function sendToTelegram(message: string) {
 
 async function checkNewConversations() {
   try {
-    console.log(`\n[${new Date().toLocaleTimeString()}] Checking for new conversations...`);
+    const checkTime = new Date(lastCheckTimestamp * 1000).toLocaleString();
+    console.log(`\n[${new Date().toLocaleTimeString()}] Checking for new conversations since ${checkTime}...`);
 
     // Get conversations since last check
     const conversations = await elevenLabs.getAllNewConversations(lastCheckTimestamp);
 
     // Debug: show status of all conversations
     conversations.forEach(c => {
-      console.log(`  - ${c.conversation_id}: status=${c.status}, processed=${processedConversations.has(c.conversation_id)}`);
+      const startDate = new Date(c.start_time_unix_secs * 1000).toLocaleTimeString();
+      console.log(`  - ${c.conversation_id}: status=${c.status}, direction=${c.direction}, duration=${c.call_duration_secs}s, started=${startDate}, processed=${processedConversations.has(c.conversation_id)}`);
     });
 
     // Filter to only "done" INBOUND conversations we haven't processed (live calls only)
