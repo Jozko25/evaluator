@@ -95,30 +95,39 @@ function formatTelegramMessage(conv: ConversationMetadata, evaluation: Evaluatio
   const date = new Date(conv.start_time_unix_secs * 1000);
   const duration = `${Math.floor(conv.call_duration_secs / 60)}m ${conv.call_duration_secs % 60}s`;
 
-  let message = `📞 *New Conversation*\n\n`;
+  let message = `╔═══════════════════════════╗\n`;
+  message += `║   *NEW CONVERSATION*      ║\n`;
+  message += `╚═══════════════════════════╝\n\n`;
+
   message += `*Agent:* ${conv.agent_name}\n`;
   message += `*Time:* ${date.toLocaleString()}\n`;
-  message += `*Duration:* ${duration}\n\n`;
+  message += `*Duration:* ${duration}\n`;
+  message += `\n─────────────────────────────\n\n`;
 
-  message += `📝 *Summary*\n${evaluation.summary}\n\n`;
+  message += `*SUMMARY*\n${evaluation.summary}\n`;
+  message += `\n─────────────────────────────\n`;
 
   if (evaluation.transcriptionIssues.length > 0) {
-    message += `⚠️ *Slovak Transcription Issues*\n`;
-    evaluation.transcriptionIssues.forEach(issue => message += `• ${issue}\n`);
-    message += `\n`;
+    message += `\n*SLOVAK TRANSCRIPTION ISSUES*\n`;
+    evaluation.transcriptionIssues.forEach(issue => message += `  • ${issue}\n`);
+    message += `\n─────────────────────────────\n`;
   }
 
-  // Format conversation with better readability - each message on separate line with emoji
-  message += `💬 *Conversation*\n`;
-  message += `━━━━━━━━━━━━━━━━━━━━\n`;
+  // Format conversation with clean structure
+  message += `\n*CONVERSATION TRANSCRIPT*\n`;
+  message += `═════════════════════════════\n\n`;
 
   const lines = evaluation.conversation.split('\n');
   lines.forEach(line => {
     if (line.trim()) {
       if (line.startsWith('USER:')) {
-        message += `\n👤 *User:*\n${line.replace('USER:', '').trim()}\n`;
+        message += `┌─ USER ─────────────────────\n`;
+        message += `│ ${line.replace('USER:', '').trim()}\n`;
+        message += `└────────────────────────────\n\n`;
       } else if (line.startsWith('AGENT:')) {
-        message += `\n🤖 *Agent:*\n${line.replace('AGENT:', '').trim()}\n`;
+        message += `┌─ AGENT ────────────────────\n`;
+        message += `│ ${line.replace('AGENT:', '').trim()}\n`;
+        message += `└────────────────────────────\n\n`;
       }
     }
   });
