@@ -1,0 +1,468 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <title>11Labs Conversation Evaluator</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: #0a0a0a;
+            color: #ffffff;
+            padding-bottom: env(safe-area-inset-bottom);
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 20px;
+            text-align: center;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.3);
+        }
+
+        .header h1 {
+            font-size: 24px;
+            margin-bottom: 5px;
+        }
+
+        .stats-bar {
+            display: flex;
+            justify-content: space-around;
+            background: #1a1a1a;
+            padding: 15px;
+            border-bottom: 1px solid #333;
+        }
+
+        .stat {
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 24px;
+            font-weight: bold;
+            color: #667eea;
+        }
+
+        .stat-label {
+            font-size: 12px;
+            color: #888;
+            margin-top: 5px;
+        }
+
+        .container {
+            padding: 15px;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .conversation-card {
+            background: #1a1a1a;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 15px;
+            border: 1px solid #333;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .conversation-card:active {
+            transform: scale(0.98);
+            background: #222;
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+
+        .agent-name {
+            font-weight: 600;
+            font-size: 18px;
+        }
+
+        .score-badge {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-weight: bold;
+            font-size: 16px;
+        }
+
+        .score-badge.pending {
+            background: #555;
+        }
+
+        .card-meta {
+            display: flex;
+            gap: 15px;
+            font-size: 14px;
+            color: #888;
+            margin-bottom: 10px;
+        }
+
+        .card-summary {
+            font-size: 14px;
+            color: #ccc;
+            line-height: 1.4;
+            margin-top: 10px;
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .status-success {
+            background: #22c55e;
+            color: white;
+        }
+
+        .status-failure {
+            background: #ef4444;
+            color: white;
+        }
+
+        .status-pending {
+            background: #f59e0b;
+            color: white;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.9);
+            z-index: 1000;
+            overflow-y: auto;
+            padding: 20px;
+        }
+
+        .modal-content {
+            max-width: 800px;
+            margin: 0 auto;
+            background: #1a1a1a;
+            border-radius: 12px;
+            padding: 20px;
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .close-btn {
+            background: #333;
+            border: none;
+            color: white;
+            font-size: 24px;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            cursor: pointer;
+        }
+
+        .evaluation-section {
+            margin: 20px 0;
+            padding: 15px;
+            background: #0a0a0a;
+            border-radius: 8px;
+        }
+
+        .evaluation-section h3 {
+            margin-bottom: 10px;
+            color: #667eea;
+        }
+
+        .performance-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        .performance-item {
+            text-align: center;
+            padding: 10px;
+            background: #1a1a1a;
+            border-radius: 8px;
+        }
+
+        .performance-value {
+            font-size: 20px;
+            font-weight: bold;
+            color: #667eea;
+        }
+
+        .performance-label {
+            font-size: 12px;
+            color: #888;
+            margin-top: 5px;
+        }
+
+        .list-item {
+            padding: 8px 0;
+            border-bottom: 1px solid #333;
+        }
+
+        .list-item:last-child {
+            border-bottom: none;
+        }
+
+        .transcript-message {
+            margin: 10px 0;
+            padding: 12px;
+            border-radius: 8px;
+        }
+
+        .transcript-user {
+            background: #667eea;
+            margin-left: 20px;
+        }
+
+        .transcript-agent {
+            background: #333;
+            margin-right: 20px;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #888;
+        }
+
+        @media (max-width: 640px) {
+            .performance-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🎙️ 11Labs Evaluator</h1>
+        <div style="font-size: 14px; opacity: 0.9;">Conversation Analytics</div>
+    </div>
+
+    <div class="stats-bar">
+        <div class="stat">
+            <div class="stat-value" id="totalCount">-</div>
+            <div class="stat-label">Total</div>
+        </div>
+        <div class="stat">
+            <div class="stat-value" id="avgScore">-</div>
+            <div class="stat-label">Avg Score</div>
+        </div>
+        <div class="stat">
+            <div class="stat-value" id="successRate">-</div>
+            <div class="stat-label">Success Rate</div>
+        </div>
+    </div>
+
+    <div class="container">
+        <div id="conversations"></div>
+    </div>
+
+    <div class="modal" id="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="modalTitle">Conversation Details</h2>
+                <button class="close-btn" onclick="closeModal()">&times;</button>
+            </div>
+            <div id="modalBody"></div>
+        </div>
+    </div>
+
+    <script>
+        let conversations = [];
+
+        async function loadStats() {
+            try {
+                const response = await fetch('/api/stats');
+                const data = await response.json();
+
+                document.getElementById('totalCount').textContent = data.totalConversations;
+                document.getElementById('avgScore').textContent = data.averageScore.toFixed(1);
+                document.getElementById('successRate').textContent = data.successRate + '%';
+            } catch (error) {
+                console.error('Failed to load stats:', error);
+            }
+        }
+
+        async function loadConversations() {
+            try {
+                const response = await fetch('/api/conversations?limit=100');
+                const data = await response.json();
+                conversations = data.conversations;
+                renderConversations();
+            } catch (error) {
+                console.error('Failed to load conversations:', error);
+                document.getElementById('conversations').innerHTML = '<div class="loading">Failed to load conversations</div>';
+            }
+        }
+
+        function renderConversations() {
+            const container = document.getElementById('conversations');
+
+            if (conversations.length === 0) {
+                container.innerHTML = '<div class="loading">No conversations yet</div>';
+                return;
+            }
+
+            container.innerHTML = conversations.map(conv => `
+                <div class="conversation-card" onclick="showDetails('${conv.id}')">
+                    <div class="card-header">
+                        <div class="agent-name">${conv.agentName}</div>
+                        <div class="score-badge ${conv.score ? '' : 'pending'}">
+                            ${conv.score ? conv.score : 'Pending'}
+                        </div>
+                    </div>
+                    <div class="card-meta">
+                        <span>${new Date(conv.startTime * 1000).toLocaleString()}</span>
+                        <span>⏱️ ${Math.floor(conv.duration / 60)}:${(conv.duration % 60).toString().padStart(2, '0')}</span>
+                        <span>💬 ${conv.messageCount}</span>
+                    </div>
+                    <div>
+                        <span class="status-badge status-${conv.callSuccessful}">${conv.callSuccessful}</span>
+                        <span class="status-badge" style="background: #555;">${conv.direction}</span>
+                    </div>
+                    ${conv.summary ? `<div class="card-summary">${conv.summary}</div>` : ''}
+                </div>
+            `).join('');
+        }
+
+        async function showDetails(conversationId) {
+            const modal = document.getElementById('modal');
+            const modalBody = document.getElementById('modalBody');
+
+            modalBody.innerHTML = '<div class="loading">Loading...</div>';
+            modal.style.display = 'block';
+
+            try {
+                const response = await fetch(`/api/conversations/${conversationId}`);
+                const conv = await response.json();
+
+                let content = `
+                    <div class="evaluation-section">
+                        <h3>📊 Overview</h3>
+                        <div style="color: #ccc; line-height: 1.6;">
+                            <div><strong>Agent:</strong> ${conv.agentName}</div>
+                            <div><strong>Started:</strong> ${new Date(conv.startTime * 1000).toLocaleString()}</div>
+                            <div><strong>Duration:</strong> ${Math.floor(conv.duration / 60)}m ${conv.duration % 60}s</div>
+                            <div><strong>Messages:</strong> ${conv.messageCount}</div>
+                        </div>
+                    </div>
+                `;
+
+                if (conv.evaluation) {
+                    const eval = conv.evaluation;
+                    content += `
+                        <div class="evaluation-section">
+                            <h3>✨ Evaluation</h3>
+                            <div style="color: #ccc; line-height: 1.6;">${eval.summary}</div>
+
+                            <div class="performance-grid">
+                                <div class="performance-item">
+                                    <div class="performance-value">${eval.agentPerformance.responsiveness}/10</div>
+                                    <div class="performance-label">Responsiveness</div>
+                                </div>
+                                <div class="performance-item">
+                                    <div class="performance-value">${eval.agentPerformance.accuracy}/10</div>
+                                    <div class="performance-label">Accuracy</div>
+                                </div>
+                                <div class="performance-item">
+                                    <div class="performance-value">${eval.agentPerformance.helpfulness}/10</div>
+                                    <div class="performance-label">Helpfulness</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="evaluation-section">
+                            <h3>💪 Strengths</h3>
+                            ${eval.strengths.map(s => `<div class="list-item">✓ ${s}</div>`).join('')}
+                        </div>
+
+                        <div class="evaluation-section">
+                            <h3>🔧 Improvements</h3>
+                            ${eval.improvements.map(i => `<div class="list-item">→ ${i}</div>`).join('')}
+                        </div>
+
+                        <div class="evaluation-section">
+                            <h3>🏷️ Key Topics</h3>
+                            <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+                                ${eval.keyTopics.map(t => `<span style="background: #333; padding: 6px 12px; border-radius: 12px; font-size: 14px;">${t}</span>`).join('')}
+                            </div>
+                        </div>
+                    `;
+                }
+
+                if (conv.transcript && conv.transcript.length > 0) {
+                    content += `
+                        <div class="evaluation-section">
+                            <h3>💬 Transcript</h3>
+                            ${conv.transcript.map(msg => `
+                                <div class="transcript-message transcript-${msg.role}">
+                                    <div style="font-weight: bold; margin-bottom: 5px; text-transform: capitalize;">${msg.role}</div>
+                                    <div>${msg.message}</div>
+                                    <div style="font-size: 12px; opacity: 0.7; margin-top: 5px;">${msg.time_in_call_secs}s</div>
+                                </div>
+                            `).join('')}
+                        </div>
+                    `;
+                } else if (!conv.evaluation) {
+                    content += `
+                        <div class="evaluation-section">
+                            <h3>⏳ Evaluation Pending</h3>
+                            <div style="color: #888;">This conversation is waiting to be evaluated...</div>
+                        </div>
+                    `;
+                }
+
+                modalBody.innerHTML = content;
+            } catch (error) {
+                console.error('Failed to load details:', error);
+                modalBody.innerHTML = '<div class="loading">Failed to load details</div>';
+            }
+        }
+
+        function closeModal() {
+            document.getElementById('modal').style.display = 'none';
+        }
+
+        // Close modal on background click
+        document.getElementById('modal').addEventListener('click', (e) => {
+            if (e.target.id === 'modal') closeModal();
+        });
+
+        // Initial load
+        loadStats();
+        loadConversations();
+
+        // Refresh every 30 seconds
+        setInterval(() => {
+            loadStats();
+            loadConversations();
+        }, 30000);
+    </script>
+</body>
+</html>
