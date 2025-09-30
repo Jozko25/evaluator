@@ -134,9 +134,11 @@ async function checkNewConversations() {
     });
 
     // Filter to only "done" INBOUND conversations we haven't processed (live calls only)
+    // Ignore conversations shorter than 8 seconds
     const newCompleted = conversations.filter(
       c => c.status === 'done' &&
            c.direction === 'inbound' &&
+           c.call_duration_secs >= 8 &&
            !processedConversations.has(c.conversation_id)
     );
 
