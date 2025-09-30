@@ -210,8 +210,8 @@ async function checkNewConversations() {
       }
     }
 
-    // Update last check timestamp
-    lastCheckTimestamp = Math.floor(Date.now() / 1000);
+    // DON'T update timestamp - keep checking from bot start time
+    // The processedConversations Set prevents duplicates
 
   } catch (error) {
     console.error('Check failed:', error);
