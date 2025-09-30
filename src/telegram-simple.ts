@@ -129,8 +129,9 @@ function formatTelegramMessage(conv: ConversationMetadata, evaluation: Evaluatio
 async function sendToTelegram(message: string) {
   try {
     await telegram.sendMessage(TELEGRAM_CHAT_ID, message, { parse_mode: 'Markdown' });
+    console.log('✅ Message sent to Telegram');
   } catch (error) {
-    console.error('Failed to send Telegram message:', error);
+    console.error('❌ Failed to send Telegram message:', error);
   }
 }
 
