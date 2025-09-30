@@ -149,12 +149,11 @@ async function checkNewConversations() {
       console.log(`  - ${c.conversation_id}: status=${c.status}, direction=${c.direction}, duration=${c.call_duration_secs}s, started=${startDate}, processed=${processedConversations.has(c.conversation_id)}`);
     });
 
-    // Filter to only "done" INBOUND conversations we haven't processed (live calls only)
-    // Ignore conversations shorter than 8 seconds
+    // Filter to only "done" conversations we haven't processed
+    // Skip direction filter since API returns null
+    // Duration check will happen after getting full details (metadata more reliable)
     const newCompleted = conversations.filter(
       c => c.status === 'done' &&
-           c.direction === 'inbound' &&
-           c.call_duration_secs >= 8 &&
            !processedConversations.has(c.conversation_id)
     );
 
@@ -167,13 +166,21 @@ async function checkNewConversations() {
         // Get full transcript
         const details = await elevenLabs.getConversationDetails(conv.conversation_id);
 
+        // Check duration from metadata (more reliable than list endpoint)
+        const actualDuration = details.metadata?.call_duration_secs || conv.call_duration_secs;
+        if (actualDuration < 8) {
+          console.log(`  ⏭️  Too short (${actualDuration}s), skipping`);
+          processedConversations.add(conv.conversation_id);
+          continue;
+        }
+
         if (!details.transcript || details.transcript.length === 0) {
           console.log('  ⚠️  No transcript available, skipping');
           processedConversations.add(conv.conversation_id);
           continue;
         }
 
-        console.log(`  📝 Transcript: ${details.transcript.length} messages`);
+        console.log(`  📝 Transcript: ${details.transcript.length} messages, Duration: ${actualDuration}s`);
 
         // Evaluate
         console.log('  🤖 Evaluating with LLM...');
@@ -183,7 +190,7 @@ async function checkNewConversations() {
           call_successful: conv.call_successful,
         });
 
-        console.log(`  ✅ Score: ${evaluation.score}/100`);
+        console.log(`  ✅ Evaluation complete`);
 
         // Send to Telegram
         const message = formatTelegramMessage(conv, evaluation);
