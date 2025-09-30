@@ -34,8 +34,8 @@ const openai = OPENAI_API_KEY ? new OpenAI({ apiKey: OPENAI_API_KEY }) : null;
 
 // Track processed conversations in memory
 const processedConversations = new Set<string>();
-// Start from 24 hours ago to catch recent conversations
-let lastCheckTimestamp = Math.floor(Date.now() / 1000) - (24 * 60 * 60);
+// Start from NOW - only process new conversations from deployment time forward
+let lastCheckTimestamp = Math.floor(Date.now() / 1000);
 
 interface EvaluationResult {
   summary: string;
@@ -108,7 +108,20 @@ function formatTelegramMessage(conv: ConversationMetadata, evaluation: Evaluatio
     message += `\n`;
   }
 
-  message += `💬 *Conversation*\n\`\`\`\n${evaluation.conversation}\n\`\`\``;
+  // Format conversation with better readability - each message on separate line with emoji
+  message += `💬 *Conversation*\n`;
+  message += `━━━━━━━━━━━━━━━━━━━━\n`;
+
+  const lines = evaluation.conversation.split('\n');
+  lines.forEach(line => {
+    if (line.trim()) {
+      if (line.startsWith('USER:')) {
+        message += `\n👤 *User:*\n${line.replace('USER:', '').trim()}\n`;
+      } else if (line.startsWith('AGENT:')) {
+        message += `\n🤖 *Agent:*\n${line.replace('AGENT:', '').trim()}\n`;
+      }
+    }
+  });
 
   return message;
 }
